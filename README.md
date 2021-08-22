@@ -2,8 +2,6 @@
 
 一个轻量级、由C语言编写的HTTP框架
 
-向web.py致敬！
-
 ## 使用方法：
 
 第一步：声明请求处理函数，要求原型为 int (*RequestMethod)(Webc_RequestData *req,Webc_ResponseData* res)
