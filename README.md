@@ -1,5 +1,5 @@
 # Web.c
-A lightweight http server framework written in C Language
+一个轻量级、由C语言编写的HTTP框架
 
 ## 使用方法：
 
