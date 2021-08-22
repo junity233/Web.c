@@ -9,11 +9,10 @@ RM		= rm -f
 build:$(OBJS)
 	$(CC) $(CFLAGS) -o $(OUT) $(OBJS) $(LIBS)
 
-map.o:utils.h
-web.o:map.h utils.h
-trie.o:utils.h map.h
-threadpool.o:map.h utils.h trie.h web.h
-main.o:main.c web.o utils.o
+map.o:src/utils.h
+web.o:src/map.h src/utils.h
+trie.o:src/utils.h src/map.h
+main.o:main.c src/web.o src/utils.o
 	$(CC) $(CFLAGS) -c main.c -o main.o
 	
 

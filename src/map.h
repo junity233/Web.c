@@ -1,16 +1,14 @@
 /*
- * @Author: your name
- * @Date: 2021-08-18 16:25:55
- * @LastEditTime: 2021-08-21 22:49:01
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: /web.c/map.h
+ * @Author: Junity
+ * @Date: 2021-08-22 21:31:55
+ * @Description: 键值对字典，内部用list+hashcode实现
  */
 #ifndef _MAP_H
 #define _MAP_H
 
 #include"utils.h"
 
+//虽然叫map，其实是用list实现的。
 typedef struct _webc_mapEntry{
     uint32_t hashcode;
     char* key;

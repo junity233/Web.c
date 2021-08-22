@@ -4,6 +4,9 @@
 #include"map.h"
 #include"web.h"
 
+/**
+ * 保存网站结构的字典树
+ */
 typedef struct _trie_node{
     uint32_t hashcode;
     const char* path;

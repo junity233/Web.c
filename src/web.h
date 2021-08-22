@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2021-08-22 21:31:55
- * @LastEditTime: 2021-08-22 23:09:32
- * @Junity: Junity
- * @Description: Web.c对外暴露的接口
- * @FilePath: /web.c/src/web.h
- */
 #ifndef _WEB_H
 #define _WEB_H
 
