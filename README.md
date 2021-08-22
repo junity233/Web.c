@@ -1,11 +1,14 @@
 # Web.c
-A lightweight http server framework written in C Language
+一个轻量级、由C语言编写的HTTP框架
 
 ## 使用方法：
 
 第一步：声明请求处理函数，要求原型为 int (*RequestMethod)(Webc_RequestData *req,Webc_ResponseData* res)
+
 第二步：定义处理器结构
+
 第三步：在主函数中调用RunWebApplication函数启动服务器
+
 第四步：构建并运行
 
 具体请见↓
