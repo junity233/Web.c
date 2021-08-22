@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "random": "cpp",
+        "utils.h": "c",
+        "*.tcc": "cpp",
+        "ostream": "cpp",
+        "llhttp.h": "c",
+        "array": "c",
+        "string": "c",
+        "vector": "c",
+        "string_view": "c",
+        "functional": "c",
+        "limits": "c",
+        "ranges": "c",
+        "streambuf": "c",
+        "tuple": "c",
+        "cstdlib": "cpp",
+        "type_traits": "cpp",
+        "thpool.h": "c"
+    }
+}
