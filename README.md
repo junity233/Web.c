@@ -75,6 +75,7 @@ int main(){
 ## TODO
 - [x] 使用线程池实现多线程
 - [x] 解析urlencoded参数
+- [ ] 详细的注释
 - [ ] 解析formdata参数
 - [ ] 使用正则表达式解析url，实现web.py的类似效果
 - [ ] 数据分片收发
