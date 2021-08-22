@@ -61,3 +61,10 @@ int main(){
     RunWebApplication(processers,8080,16);//启动服务器，第一个参数为处理器结构，第二个参数为端口号，第三个参数为线程的数量
 }
 ```
+## TODO
+- [x] 线程池实现多线程
+- [x] 解析urlencoded参数
+- [ ] 解析formdata参数
+- [ ] url正则表达式
+- [ ] 文件分片
+- [ ] c格式字符串转HTML（换行符转<br>等）
