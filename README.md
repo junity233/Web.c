@@ -89,3 +89,11 @@ int main(){
 - [ ] 数据分片收发
 - [ ] 一键返回静态文件
 - [ ] C格式字符串转HTML（换行符转\<br>等）
+  
+## 致谢
+
+本项目使用了如下几个项目：
+
+1. https://github.com/Xsoda/url
+2. https://github.com/nodejs/llhttp
+3. https://github.com/Pithikos/C-Thread-Pool

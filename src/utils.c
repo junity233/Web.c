@@ -1,6 +1,14 @@
 #include"utils.h"
 
-
+uint32_t strnchr(const char* str,char C,size_t length){
+    uint32_t idx=0;
+    while(idx<length){
+        if(str[idx]==C)
+            return idx;
+        idx++;
+    }
+    return -1;
+}
 
 uint32_t HashString(const byte *data,size_t length){
     uint32_t b = 378551;

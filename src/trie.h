@@ -9,7 +9,7 @@
  */
 typedef struct _trie_node{
     uint32_t hashcode;
-    const char* path;
+    char* path;
     bool is_leaf;
     Webc_Processer processer;
     struct _trie_node* head;

@@ -3,18 +3,22 @@
     #include<sys/types.h>
     #include<netinet/in.h>
     #include<arpa/inet.h>
+    #include<pthread.h>
+    #include<unistd.h>
+#else
+    #include<windows.h>
+    #include<winsock2.h>
+    #pragma comment(lib, "ws2_32.lib")
 #endif
-#include<unistd.h>
 
 #include "web.h"
 #include"utils.h"
 #include "llhttp.h"
-#include<pthread.h>
-#include<setjmp.h>
-#include "thpool.h"
-#include <signal.h>
 #include "url.h"
 #include "trie.h"
+#include "thpool.h"
+#include <setjmp.h>
+#include <signal.h>
 
 
 #define DEFAULT_BUFFER_SIZE 10240
@@ -102,6 +106,8 @@ static int ParserQuery(const char* url,Webc_RequestData *res){
 static int ParseFormData(Webc_RequestData* res,const char*data,size_t length){
     NOTNULL(res);
     NOTNULL(data);
+    //TODO
+    return 0;
 }
 
 static int ParseRequest(Webc_RequestData *res,const char* data,uint32_t length){
@@ -143,7 +149,13 @@ static int ParseRequest(Webc_RequestData *res,const char* data,uint32_t length){
                 return -1;
             }
         }
-        else if(contentType!=NULL&&memcpy(contentType,"multipart/form-data;",strlen(contentType)==0));
+        else if(contentType!=NULL&&memcpy(contentType,"multipart/form-data;",strlen(contentType)==0)){
+            int formdata_parse_status=ParseFormData(res,res->body,res->bodyLength);
+            if(formdata_parse_status!=0){
+                REPORT_ERROR("解析formdata失败！返回值：%s",formdata_parse_status);
+                return -1;
+            }
+        }
         
     }
 
@@ -274,7 +286,7 @@ typedef struct{
     Webc_Trie siteStructure;
 }ConnectInfo;
 
-static int ProcessConnect(void *args){
+static void ProcessConnect(void *args){
     ConnectInfo* info=(ConnectInfo*)args;
     int connectfd=info->connectfd;
     struct sockaddr_in in=info->in;
@@ -296,10 +308,10 @@ static int ProcessConnect(void *args){
         REPORT_ERROR("解析报文失败，返回值%d",parse_status);
         free(recvBuffer);
         close(connectfd);
-        return -1;;
+        return;
     }
 
-    SetResponseHeader(&res,"Content-Type","text/html");
+    SetResponseHeader(&res,"Content-Type","text/html");//Content-Type默认为text/html
     Webc_Processer processer=TrieGet(siteStructure,data.url);
 
     int idx;
@@ -336,7 +348,7 @@ static int ProcessConnect(void *args){
         REPORT_NOTE("%s 请求: %d / %s 内部错误,程序返回值:%d",HttpMethodNames[data.requestType],500,inet_ntoa(in.sin_addr),status);
     }
     else{
-        REPORT_NOTE("%s 请求: %d / %s %s",HttpMethodNames[data.requestType],status,inet_ntoa(in.sin_addr),data.url);
+        REPORT_NOTE("%s 请求: %d 来自 %s 请求地址 %s",HttpMethodNames[data.requestType],status,inet_ntoa(in.sin_addr),data.url);
         PrintfToBuffer(buffer,"HTTP/1.1 %d\n",status);
         WEBC_MAP_FOREACH(res.headers,i){
             PrintfToBuffer(buffer,"%s : %s\n",i->key,i->value);
@@ -348,7 +360,6 @@ static int ProcessConnect(void *args){
     RequestDataClear(&data);
     BufferClean(buffer);
     close(connectfd);
-    return 0;
 }
 
 void RuntimeError(int n){

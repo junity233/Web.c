@@ -16,6 +16,7 @@
         "tuple": "c",
         "cstdlib": "cpp",
         "type_traits": "cpp",
-        "thpool.h": "c"
+        "thpool.h": "c",
+        "errno.h": "c"
     }
 }

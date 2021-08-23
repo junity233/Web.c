@@ -1,3 +1,8 @@
+/*
+ * @Author: Junity
+ * @Date: 2021-08-22 21:31:55
+ * @Description: 用于描述网站结构的tried树的实现
+ */
 #include "trie.h"
 
 Webc_Trie NewTrie(){
@@ -18,7 +23,7 @@ void TrieInsert(Webc_Trie tree,const char* path,Webc_Processer processer){
     Webc_Trie cur=tree;
     uint32_t hashcode=0;
     while(idx<length-1){
-        int next=strchr(path+idx,'/')-path;
+        int next=strnchr(path+idx,'/',length-idx);
         if(next<0)
             next=length-1;
         buffer=strndup(path+idx,next-idx);
@@ -62,7 +67,7 @@ Webc_Processer TrieGet(Webc_Trie tree,const char* path){
     Webc_Trie cur=tree;
     uint32_t hashcode=0;
     while(idx<length-1){
-        int next=strchr(path+idx,'/')-path;
+        int next=strnchr(path+idx,'/',length-idx);
         if(next<0)
             next=length-1;
         if(path[next]=='/')

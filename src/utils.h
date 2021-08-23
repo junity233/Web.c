@@ -24,6 +24,8 @@ typedef int bool;
 
 uint32_t HashString(const byte *data,size_t length);
 
+uint32_t strnchr(const char* str,char C,size_t length);
+
 char* copystr(const char* src,size_t length);
 
 typedef struct{
