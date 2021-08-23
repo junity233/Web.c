@@ -4,9 +4,7 @@
 #include"map.h"
 
 /**
- * @description: http请求类型，目前仅支持GET和POST
- * @param {*}
- * @return {*}
+ * http请求类型，目前仅支持GET和POST
  */
 typedef enum{
     RT_DELETE = 0,
@@ -127,11 +125,11 @@ char* GetResponseHeader(Webc_ResponseData *res,const char* name);
 
 /**
  * @description: 请求的处理函数原型
- * @param {Webc_RequestData} *data 请求体
- * @param {Webc_ResponseData*} res  响应体
+ * @param {Webc_RequestData} *req 请求体
+ * @param {Webc_ResponseData*} *res  响应体
  * @return {*}
  */
-typedef int (*RequestMethod)(Webc_RequestData *data,Webc_ResponseData* res);
+typedef int (*RequestMethod)(Webc_RequestData *req,Webc_ResponseData* res);
 
 /**
  * 处理器结构
