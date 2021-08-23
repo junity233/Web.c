@@ -14,7 +14,13 @@ web.o:src/map.h src/utils.h
 trie.o:src/utils.h src/map.h
 main.o:main.c src/web.o src/utils.o
 	$(CC) $(CFLAGS) -c main.c -o main.o
-	
+
+install-third-party-library: c-thread-pool
+
+c-thread-pool:
+	$(RM) -r C-Thread-Pool
+	git clone https://github.com/Pithikos/C-Thread-Pool.git
+	$(CC) -c C-Thread-Pool/thpool.c -pthread -o C-Thread-Pool/thpool.o
 
 .PHONY:clean
 clean:
