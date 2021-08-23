@@ -286,6 +286,44 @@ typedef struct{
     Webc_Trie siteStructure;
 }ConnectInfo;
 
+static void TransToHTML(Webc_ResponseData *res){
+    NOTNULL(res);
+    BinaryBuffer *buffer=NewBuffer();
+    PrintfToBuffer(buffer,"<!DOCTYPE html>\n");
+    for(int i=0;i<res->body->used;i++){
+        if(res->body->data[i]=='\n')
+            WriteToBuffer(buffer,"<br>\n",5);
+        else if(res->body->data[i]==' ')
+            WriteToBuffer(buffer,"&nbsp;",6);
+        else
+            WriteToBuffer(buffer,res->body->data+i,1);
+    }   
+    BufferClean(res->body);
+    res->body=buffer; 
+}
+
+static void SendResponse(Webc_ResponseData res,int connectfd){
+    BinaryBuffer *buffer=NewBuffer();
+    if(res.statusCode<0)
+    {
+        PrintfToBuffer(buffer,"HTTP/1.1 %d\n",500);
+    }
+    else{
+        PrintfToBuffer(buffer,"HTTP/1.1 %d\n",res.statusCode);
+        WEBC_MAP_FOREACH(res.headers,i){
+            PrintfToBuffer(buffer,"%s : %s\n",i->key,i->value);
+        }
+        if(res.dt==DT_HTML)
+        {
+            SetResponseHeader(&res,"Content-Type","text/html");
+            TransToHTML(&res);
+        }
+        PrintfToBuffer(buffer,"Content-Length:%d\n\n",res.body->used);
+    }
+    WriteToBuffer(buffer,res.body->data,res.body->used);
+    send(connectfd,buffer->data,buffer->used,0);
+}
+
 static void ProcessConnect(void *args){
     ConnectInfo* info=(ConnectInfo*)args;
     int connectfd=info->connectfd;
@@ -298,67 +336,48 @@ static void ProcessConnect(void *args){
     length=recv(connectfd,recvBuffer,10240,0);
     REPORT_DEBUG("接收到信息：\n%s\n",recvBuffer);
 
-    Webc_RequestData data;
-    RequestDataInit(&data);
+    Webc_RequestData req;
+    RequestDataInit(&req);
     Webc_ResponseData res;
     ResponseInit(&res);
 
-    int parse_status=ParseRequest(&data,recvBuffer,length);
+    int parse_status=ParseRequest(&req,recvBuffer,length);
     if(parse_status!=0){
         REPORT_ERROR("解析报文失败，返回值%d",parse_status);
         free(recvBuffer);
         close(connectfd);
         return;
     }
-
-    SetResponseHeader(&res,"Content-Type","text/html");//Content-Type默认为text/html
-    Webc_Processer processer=TrieGet(siteStructure,data.url);
+    res.dt=DT_HTML;//Content-Type默认为text/html
+    Webc_Processer processer=TrieGet(siteStructure,req.url);
 
     int idx;
     for(idx=0;JmpBufferTable[idx].is_use==true;idx++);
     JmpBufferTable[idx].is_use=true;
     JmpBufferTable[idx].pid=pthread_self();
-    int status;
     int jmp_res=setjmp(JmpBufferTable[idx].buf);
     if(jmp_res==0){
-        switch(data.requestType){
+        switch(req.requestType){
             case RT_GET:
                 if(processer.GET!=NULL)
-                    status=(*processer.GET)(&data,&res);
-                else status=404;
+                    res.statusCode=(*processer.GET)(&req,&res);
+                else res.statusCode=404;
                 break;
             case RT_POST:
                 if (processer.POST!=NULL)            
-                    status=(*processer.POST)(&data,&res);
-                else status=404;
+                    res.statusCode=(*processer.POST)(&req,&res);
+                else res.statusCode=404;
                 break;
             default:UNREACHED();
         }
     }else{
-        status=500;
+        res.statusCode=500;
         BufferReset(res.body);
     }
+    REPORT_NOTE("%s 请求: %d 来自 %s 请求地址 %s",HttpMethodNames[req.requestType],res.statusCode,inet_ntoa(in.sin_addr),req.url);
     JmpBufferTable[idx].is_use=false;
-        
-    BinaryBuffer *buffer=NewBuffer();
-
-    if(status<0)
-    {
-        PrintfToBuffer(buffer,"HTTP/1.1 %d\n",500);
-        REPORT_NOTE("%s 请求: %d / %s 内部错误,程序返回值:%d",HttpMethodNames[data.requestType],500,inet_ntoa(in.sin_addr),status);
-    }
-    else{
-        REPORT_NOTE("%s 请求: %d 来自 %s 请求地址 %s",HttpMethodNames[data.requestType],status,inet_ntoa(in.sin_addr),data.url);
-        PrintfToBuffer(buffer,"HTTP/1.1 %d\n",status);
-        WEBC_MAP_FOREACH(res.headers,i){
-            PrintfToBuffer(buffer,"%s : %s\n",i->key,i->value);
-        }
-        PrintfToBuffer(buffer,"Content-Length:%d\n\n",res.body->used);
-        WriteToBuffer(buffer,res.body->data,res.body->used);
-    }
-    send(connectfd,buffer->data,buffer->used,0);
-    RequestDataClear(&data);
-    BufferClean(buffer);
+    SendResponse(res,connectfd);
+    RequestDataClear(&req);
     close(connectfd);
 }
 

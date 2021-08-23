@@ -76,12 +76,24 @@ long double GetNumArgment(Webc_RequestData* req,const char*name);
  */
 bool GetBoolArgment(Webc_RequestData* req,const char*name);
 
+
+/**
+ * 数据类型
+ */
+typedef enum{
+    DT_RAW,
+    DT_HTML,
+    DT_FILE
+}Webc_DataType;
+
 /**
  * 响应结构
  */
 typedef struct{
     Webc_Map headers;       //响应头
+    int statusCode;         //HTTP状态码
     BinaryBuffer *body;     //响应体
+    Webc_DataType dt;       //返回的数据类型（默认为html）
 }Webc_ResponseData;
 
 #define RET_OK() do{return 200;}while(0)
@@ -112,25 +124,6 @@ void SetResponseHeader(Webc_ResponseData *res,const char* name,const char* value
  */
 char* GetResponseHeader(Webc_ResponseData *res,const char* name);
 
-/**
- * 参数类型(未实现)
- */
-typedef enum{
-    AT_FORMDATA,
-    AT_URLENCODED,
-    AT_RAW          //原始数据
-}Webc_ArgmentType;
-
-/**
- * 参数结构（未实现）
- */
-typedef struct{
-    Webc_ArgmentType type;
-    union{
-        Webc_Map args;
-        char* data;
-    };
-}WebArgments;
 
 /**
  * @description: 请求的处理函数原型

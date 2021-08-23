@@ -22,7 +22,7 @@ void TrieInsert(Webc_Trie tree,const char* path,Webc_Processer processer){
     size_t length=strlen(path);
     Webc_Trie cur=tree;
     uint32_t hashcode=0;
-    while(idx<length-1){
+    while(idx<length){
         int next=strnchr(path+idx,'/',length-idx);
         if(next<0)
             next=length-1;
@@ -66,7 +66,7 @@ Webc_Processer TrieGet(Webc_Trie tree,const char* path){
     size_t length=strlen(path);
     Webc_Trie cur=tree;
     uint32_t hashcode=0;
-    while(idx<length-1){
+    while(idx<length){
         int next=strnchr(path+idx,'/',length-idx);
         if(next<0)
             next=length-1;
