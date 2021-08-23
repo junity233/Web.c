@@ -41,6 +41,8 @@ $ make build # 编译
  * echo宏就是向res的body成员写入信息
  */
 int Index(Webc_RequestData *req,Webc_ResponseData *res){
+    echo("<!doctype html>");
+
     int num=GetNumArgment(req,"num");   //调用GetNumArgment函数来获取一个数字型的参数（若不存在会返回0）
     for(int i=1;i<=num;i++)
     {                                   //打印一个三角形
@@ -71,9 +73,9 @@ Webc_Processer processers[]={
 };
 
 int main(){
-    ErrorGrade(ET_NOTE);//设置日志级别为NOTE级别（非必要，默认值为Warning）
-    WebQueueSize(1024);//设置socket队列的最大长度（非必要，默认值为1024）
-    WebBufferSize(1024*1024);//设置recv缓冲区的长度（非必要，默认值为10Kb）
+    ErrorGrade(ET_NOTE);//设置日志级别为NOTE级别
+    WebQueueSize(1024);//设置socket队列的最大长度
+    WebBufferSize(1024*1024);//设置recv缓冲区的长度
     RunWebApplication(processers,8080,16);//启动服务器，第一个参数为处理器结构，第二个参数为端口号，第三个参数为线程的数量
 }
 ```
