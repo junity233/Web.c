@@ -1,7 +1,7 @@
 # Web.c
 
 web.c是一个轻量级的http服务器框架，可以像web.py一样快速编写web应用程序
-
+项目在linux下编译通过，现在正在努力兼容windows平台。
 
 ## 特点
 - 使用C-Thread-Pool库，可自定义线程数量且线程死亡不会影响进程（返回500）
@@ -75,6 +75,7 @@ int main(){
 ## TODO
 - [x] 使用线程池实现多线程
 - [x] 解析urlencoded参数
+- [ ] windows兼容
 - [ ] 详细的注释
 - [ ] 解析formdata参数
 - [ ] 使用正则表达式解析url，实现web.py的类似效果
