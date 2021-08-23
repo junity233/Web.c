@@ -17,6 +17,11 @@ web.c是一个轻量级的http服务器框架，可以像web.py一样快速编�
 - 页面效果:
 - ![Client](https://pic4.58cdn.com.cn/nowater/webim/big/n_v28096af3640944869b0c76c5f4f369585.png)
 
+## 如何编译
+```bash
+$ make install-third-party-library # 安装第三方库
+$ make build # 编译
+```
 
 ## 使用方法：
 

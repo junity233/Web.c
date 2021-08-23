@@ -1,0 +1,6 @@
+# binary files
+*.o
+main
+
+# thrid party library
+C-Thread-Pool/
