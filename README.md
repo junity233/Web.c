@@ -181,3 +181,4 @@ typedef struct{
 1. https://github.com/Xsoda/url
 2. https://github.com/nodejs/llhttp
 3. https://github.com/Pithikos/C-Thread-Pool
+4. https://github.com/guillermocalvo/exceptions4c
