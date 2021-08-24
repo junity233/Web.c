@@ -92,8 +92,8 @@ static int ParserUrl(const char* url,Webc_RequestData *res){
 }
 
 static int ParserQuery(const char* url,Webc_RequestData *res){
-    NOTNULL(url)
-    NOTNULL(res)
+    NOTNULL(url);
+    NOTNULL(res);
     url_field_t *parse_res=MALLOC(url_field_t);
     memset(parse_res,0,sizeof(url_field_t));
     parse_query(parse_res,url);
@@ -111,8 +111,8 @@ static int ParseFormData(Webc_RequestData* res,const char*data,size_t length){
 }
 
 static int ParseRequest(Webc_RequestData *res,const char* data,uint32_t length){
-    NOTNULL(res)
-    NOTNULL(data)
+    NOTNULL(res);
+    NOTNULL(data);
     int status;    
     llhttp_t parser;
     ParseBuffer buffer;
@@ -187,7 +187,7 @@ static int ParseRequest(Webc_RequestData *res,const char* data,uint32_t length){
 }
 
 static void RequestDataInit(Webc_RequestData* data){
-    NOTNULL(data)
+    NOTNULL(data);
     data->url=data->version=data->body=NULL;
     data->cookies=NewMap();
     data->headers=NewMap();
@@ -196,7 +196,7 @@ static void RequestDataInit(Webc_RequestData* data){
 }
 
 static void RequestDataClear(Webc_RequestData* data){
-    NOTNULL(data)
+    NOTNULL(data);
     MapClean(data->cookies);
     MapClean(data->headers);
     MapClean(data->args);
@@ -206,26 +206,25 @@ static void RequestDataClear(Webc_RequestData* data){
         free(data->url);
 }
 
-
 void ResponseInit(Webc_ResponseData* response){
-    NOTNULL(response)
+    NOTNULL(response);
     response->headers=NewMap();
     response->body=NewBuffer();
 }
 
 void ResponseDataClear(Webc_ResponseData* response){
-    NOTNULL(response)
+    NOTNULL(response);
     MapClean(response->headers);
     BufferClean(response->body);
 }
 
 void SetRequestHeader(Webc_RequestData *res,const char* name,const char* value){
-    NOTNULL(res)
+    NOTNULL(res);
     MapSet(res->headers,name,value,-1);
 }
 
 char* GetRequestHeader(Webc_RequestData *res,const char* name){
-    NOTNULL(res)
+    NOTNULL(res);
     return MapGet(res->headers,name,NULL);
 }
 

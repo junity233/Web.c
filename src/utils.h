@@ -84,9 +84,9 @@ void ErrorReport(ErrorType et,const char* fmt,...);
 
 #define NOTNULL(var) ASSERT((var)!=NULL,"执行 %s 的 %s 为NULL!",__FUNCTION__,#var);
 #else
-#define UNREACHED() (void(0))
-#define ASSERT(con,msg) (void(0))
-#define NOTNULL(var) (void(0))
+#define UNREACHED() ((void)0)
+#define ASSERT(con,msg) ((void)0)
+#define NOTNULL(var) ((void)0)
 #endif
 
 #define MALLOC(type) \
