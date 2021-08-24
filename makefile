@@ -1,10 +1,18 @@
 CC		=	gcc
 INCLUDE	= -I llhttp/include -I C-Thread-Pool -I src
-CFLAGS	= -Wall -D_DEBUG -g3 -pthread $(INCLUDE)
+DEBUG	= -g3 -D_DEBUG
+RELEASE	= -O2
+CFLAGS	= -Wall -pthread $(INCLUDE)
 OBJS	=	main.o src/utils.o src/map.o src/web.o src/url.o src/trie.o llhttp/src/api.o llhttp/src/http.o llhttp/src/llhttp.o C-Thread-Pool/thpool.o
 OUT		= main
 RM		= rm -f
 
+.PHONY:debug release
+debug:CFLAGS+=$(DEBUG)
+debug:build
+
+release:CFLAGS+=$(RELEASE)
+release:build
 
 build:$(OBJS)
 	$(CC) $(CFLAGS) -o $(OUT) $(OBJS) $(LIBS)
