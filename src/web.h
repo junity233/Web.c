@@ -6,6 +6,26 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
+
+/**
+ * 请求传输的参数的类型
+ */
+typedef enum{
+    AT_RAW,             //原始数据
+    AT_FILE             //文件
+}Webc_ArgmentType;
+
+/**
+ * 请求传输的参数的结构
+ */
+typedef struct{
+    Webc_ArgmentType at;    //本参数类型
+    size_t length;          //长度
+    char* fileName;         //若为文件，则本项为文件名
+    char* contentType;      //若为文件，则本项为content-type
+    void* data;             //数据
+}Webc_ArgmentData;
+
 /**
  * http请求类型，目前仅支持GET和POST
  */
@@ -33,6 +53,7 @@ typedef struct{
     char* body;                     //请求体
     size_t bodyLength;              //请求体长度
     Webc_Map args;                  //请求参数，由web.c自动解析
+    Webc_Map files;                 //请求传来的文件，
 }Webc_RequestData;
 
 /**
@@ -102,6 +123,18 @@ void ReturnFile(Webc_ResponseData* res,const char* file,const char* type);
 #define RET_BINARY_FILE(file) RET_FILE(file,"application/octet-stream")
 
 #define RET_NOTFOUND() return(404)
+
+#define RET_302(url) \
+    do{ \
+        SetResponseHeader(res,"Location",url); \
+        return 302; \
+    }while(0)
+
+#define RET_301(url) \
+    do{ \
+        SetResponseHeader(res,"Location",url); \
+        return 301; \
+    }while(0)
 
 /**
  * @description: 向响应体中写入数据，参数类似printf（需将响应体变量名设置为res）
