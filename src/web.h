@@ -3,6 +3,9 @@
 
 #include"map.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
 /**
  * http请求类型，目前仅支持GET和POST
  */
@@ -72,8 +75,7 @@ long double GetNumArgment(Webc_RequestData* req,const char*name);
  * @param {const} char
  * @return {*}
  */
-bool GetBoolArgment(Webc_RequestData* req,const char*name);
-
+int GetBoolArgment(Webc_RequestData* req,const char*name);
 
 
 /**
@@ -85,11 +87,21 @@ typedef struct{
     BinaryBuffer *body;     //响应体
 }Webc_ResponseData;
 
-#define RET_OK() do{return 200;}while(0)
+#define RET_OK() return(200)
 
-#define RET_FILE(file) ReadFileToBuffer(res->body,file)
+void ReturnFile(Webc_ResponseData* res,const char* file,const char* type);
 
-#define RET_NOTFOUND() do{return 404;}while(0)
+#define RET_FILE(file,type) \
+    do{ \
+        ReturnFile(res,file,type); \
+        return 200; \
+    }while(0)
+
+#define RET_HTML_FILE(file) RET_FILE(file,"text/html")
+
+#define RET_BINARY_FILE(file) RET_FILE(file,"application/octet-stream")
+
+#define RET_NOTFOUND() return(404)
 
 /**
  * @description: 向响应体中写入数据，参数类似printf（需将响应体变量名设置为res）
@@ -162,5 +174,9 @@ void RunWebApplication(Webc_Processer *processer,int port,size_t maxThreadNum);
  * @return {*}
  */
 void ExitApplication(int n);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -91,6 +91,8 @@ void PrintfToBuffer(BinaryBuffer*buffer,const char* fmt,...){
 
 
 void ReadFileToBuffer(BinaryBuffer* buffer,const char* file){
+    NOTNULL(buffer);
+    NOTNULL(file);
     struct stat fs;
     stat(file,&fs);
     size_t length=fs.st_size;

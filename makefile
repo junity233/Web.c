@@ -1,9 +1,10 @@
 CC		=	gcc
-INCLUDE	= -I llhttp/include -I C-Thread-Pool -I src
+INCLUDE	= -I llhttp/include -I C-Thread-Pool -I src -I e4c/src
+DEFINES	= -DE4C_THREADSAFE
 DEBUG	= -g3 -D_DEBUG
 RELEASE	= -O2
-CFLAGS	= -Wall -pthread $(INCLUDE)
-OBJS	=	main.o src/utils.o src/map.o src/web.o src/url.o src/trie.o llhttp/src/api.o llhttp/src/http.o llhttp/src/llhttp.o C-Thread-Pool/thpool.o
+CFLAGS	= -Wall -pthread $(INCLUDE) $(DEFINES)
+OBJS	=	main.o src/utils.o src/map.o src/web.o src/url.o src/trie.o llhttp/src/api.o llhttp/src/http.o llhttp/src/llhttp.o C-Thread-Pool/thpool.o e4c/src/e4c.o
 OUT		= main
 RM		= rm -f
 

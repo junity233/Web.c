@@ -17,7 +17,7 @@
 #include "url.h"
 #include "trie.h"
 #include "thpool.h"
-#include <setjmp.h>
+#include "e4c.h"
 #include <signal.h>
 
 
@@ -26,12 +26,6 @@
 #define MAX_QUEUE_NUM 1024
 
 int listenfd;
-
-struct _jmpBufferTable{
-    jmp_buf buf;
-    pthread_t pid;
-    bool is_use;
-}*JmpBufferTable;
 
 const char* HttpMethodNames[]={
     "DELETE ",
@@ -79,6 +73,10 @@ static int OnBody(llhttp_t *parser,const char*at,size_t length){
     ((ParseBuffer*)parser->data)->res->body=copystr(at,length);
     REPORT_DEBUG("Body:%s",((ParseBuffer*)parser->data)->res->body);    
     return 0;
+}
+
+static void OnException(const e4c_exception * exception){
+    REPORT_DEBUG("发生 %s 异常！于 %s ,函数 %s ,第 %d 行，原因：%s",exception->name,exception->file,exception->function,exception->line,exception->message);
 }
 
 static int ParserUrl(const char* url,Webc_RequestData *res){
@@ -240,7 +238,7 @@ long double GetNumArgment(Webc_RequestData* req,const char*name){
     return strtold(res,NULL);
 }
 
-bool GetBoolArgment(Webc_RequestData* req,const char*name){
+int GetBoolArgment(Webc_RequestData* req,const char*name){
     char* res=MapGet(req->args,name,NULL);
     if(res==NULL)
         return NOT_BOOL;
@@ -261,6 +259,12 @@ void SetResponseHeader(Webc_ResponseData *res,const char* name,const char* value
     MapSet(res->headers,name,value,-1);
 }
 
+void ReturnFile(Webc_ResponseData* res,const char* file,const char* type){
+    NOTNULL(res);
+    SetResponseHeader(res,"Content-Type",type);
+    ReadFileToBuffer(res->body,file);
+}
+
 size_t WebQueueSize(size_t size){
     static size_t webQueueSize=MAX_QUEUE_NUM;
     if(size!=0)
@@ -273,6 +277,14 @@ size_t WebBufferSize(size_t size){
     if(size!=0)
         webBufferSize=size;
     return webBufferSize;
+}
+
+size_t WebBlockSize(size_t size){
+    static size_t webBlockSize=DEFAULT_BUFFER_SIZE;
+    if(size!=0)
+        webBlockSize=size;
+    return webBlockSize;
+
 }
 
 static void ExitHandler(int n){
@@ -300,100 +312,94 @@ static void SendResponse(Webc_ResponseData res,int connectfd){
         PrintfToBuffer(buffer,"Content-Length:%d\n\n",res.body->used);
     }
     WriteToBuffer(buffer,res.body->data,res.body->used);
-    send(connectfd,buffer->data,buffer->used,0);
+    ssize_t sendSize=0;
+    while (sendSize<res.body->used)
+    {
+        sendSize+=send(connectfd,buffer->data+sendSize,WebBlockSize(0),0);
+    }
+    //send(connectfd,buffer->data,buffer->used,0);
 }
 
 static void ProcessConnect(void *args){
-    ConnectInfo* info=(ConnectInfo*)args;
-    int connectfd=info->connectfd;
-    struct sockaddr_in in=info->in;
-    Webc_Trie siteStructure=info->siteStructure;
-    char *recvBuffer;
-    recvBuffer=MALLOC_ARRAY(char,WebBufferSize(0));
-    ssize_t length;
-    memset(recvBuffer,0,WebBufferSize(0));
-    length=recv(connectfd,recvBuffer,10240,0);
-    REPORT_DEBUG("接收到信息：\n%s\n",recvBuffer);
+    e4c_using_context(E4C_TRUE){
+        ConnectInfo* info=(ConnectInfo*)args;
+        int connectfd=info->connectfd;
+        struct sockaddr_in in=info->in;
+        Webc_Trie siteStructure=info->siteStructure;
+        char *recvBuffer;
+        recvBuffer=MALLOC_ARRAY(char,WebBufferSize(0));
+        ssize_t length;
+        memset(recvBuffer,0,WebBufferSize(0));
+        length=recv(connectfd,recvBuffer,10240,0);
+        REPORT_DEBUG("接收到信息：\n%s\n",recvBuffer);
 
-    Webc_RequestData req;
-    RequestDataInit(&req);
-    Webc_ResponseData res;
-    ResponseInit(&res);
+        Webc_RequestData req;
+        RequestDataInit(&req);
+        Webc_ResponseData res;
+        ResponseInit(&res);
 
-    int parse_status=ParseRequest(&req,recvBuffer,length);
-    if(parse_status!=0){
-        REPORT_ERROR("解析报文失败，返回值%d",parse_status);
-        free(recvBuffer);
+        int parse_status=ParseRequest(&req,recvBuffer,length);
+        if(parse_status!=0){
+            REPORT_ERROR("解析报文失败，返回值%d",parse_status);
+            free(recvBuffer);
+            close(connectfd);
+            return;
+        }
+        //Content-Type默认为text/html
+        SetResponseHeader(&res,"Content-Type","text/html");
+        Webc_Processer processer=TrieGet(siteStructure,req.url);
+        
+        try{
+            switch(req.requestType){
+                case RT_GET:
+                    if(processer.GET!=NULL)
+                        res.statusCode=(*processer.GET)(&req,&res);
+                    else{
+                        ReadFileToBuffer(res.body,"html/404.html");
+                        res.statusCode=404;
+                    }
+                    break;
+                case RT_POST:
+                    if (processer.POST!=NULL)            
+                        res.statusCode=(*processer.POST)(&req,&res);
+                    else{
+                        ReadFileToBuffer(res.body,"html/404.html");
+                        res.statusCode=404;
+                    }
+                    break;
+                default:UNREACHED();
+            }
+        }
+        catch(ArithmeticException){
+            REPORT_DEBUG("内部错误：算数异常！");
+        }
+        catch(BadPointerException){
+            REPORT_DEBUG("内部错误：指针异常！");
+        }
+        catch(RuntimeException){
+            REPORT_DEBUG("内部错误：未知原因");
+        }
+        finally{
+            if(e4c_get_status()==e4c_failed){
+                res.statusCode=500;
+                OnException(e4c_get_exception());
+                BufferReset(res.body);
+            }
+        }
+        
+        REPORT_NOTE("%s 请求: %d 来自 %s 请求地址 %s",HttpMethodNames[req.requestType],res.statusCode,inet_ntoa(in.sin_addr),req.url);
+        SendResponse(res,connectfd);
+        RequestDataClear(&req);
         close(connectfd);
-        return;
     }
-    //Content-Type默认为text/html
-    SetResponseHeader(&res,"Content-Type","text/html");
-    Webc_Processer processer=TrieGet(siteStructure,req.url);
-
-    int idx;
-    for(idx=0;JmpBufferTable[idx].is_use==true;idx++);
-    JmpBufferTable[idx].is_use=true;
-    JmpBufferTable[idx].pid=pthread_self();
-    int jmp_res=setjmp(JmpBufferTable[idx].buf);
-    if(jmp_res==0){
-        switch(req.requestType){
-            case RT_GET:
-                if(processer.GET!=NULL)
-                    res.statusCode=(*processer.GET)(&req,&res);
-                else{
-                    ReadFileToBuffer(res.body,"html/404.html");
-                    res.statusCode=404;
-                }
-                break;
-            case RT_POST:
-                if (processer.POST!=NULL)            
-                    res.statusCode=(*processer.POST)(&req,&res);
-                else{
-                    ReadFileToBuffer(res.body,"html/404.html");
-                    res.statusCode=404;
-                }
-                break;
-            default:UNREACHED();
-        }
-    }else{
-        res.statusCode=500;
-        BufferReset(res.body);
-    }
-    REPORT_NOTE("%s 请求: %d 来自 %s 请求地址 %s",HttpMethodNames[req.requestType],res.statusCode,inet_ntoa(in.sin_addr),req.url);
-    JmpBufferTable[idx].is_use=false;
-    SendResponse(res,connectfd);
-    RequestDataClear(&req);
-    close(connectfd);
-}
-
-void RuntimeError(int n){
-    pthread_t pid=pthread_self();
-    REPORT_DEBUG("线程运行时错误！线程编号:%d，错误原因:%s",pid,({
-        const char*res;
-        switch(n){
-            case SIGFPE:
-                res="浮点运算错误！";
-                break;
-            case SIGSEGV:
-                res="访问无效内存！";
-                break;
-            default:
-                UNREACHED();
-        }
-        res;
-    }));
-    for(int idx=0;;idx++)
-        if(pid==JmpBufferTable[idx].pid)
-            longjmp(JmpBufferTable[idx].buf,n);
 }
 
 void RunWebApplication(Webc_Processer *processers,int port,size_t maxThreadNum){
     NOTNULL(processers);
     struct sockaddr_in servaddr;
     signal(SIGINT,ExitHandler);
-    signal(SIGSEGV,RuntimeError);
-    signal(SIGFPE,RuntimeError);
+
+
     if((listenfd=socket(AF_INET,SOCK_STREAM,0))==-1){
         REPORT_ERROR("创建套接字失败!返回值:%d",listenfd);
         exit(0);
@@ -431,9 +437,6 @@ void RunWebApplication(Webc_Processer *processers,int port,size_t maxThreadNum){
     REPORT_DEBUG("进入消息循环");
 
     threadpool pool=thpool_init(maxThreadNum);
-    JmpBufferTable=MALLOC_ARRAY(struct _jmpBufferTable,maxThreadNum);
-    for(int i=0;i<maxThreadNum;i++)
-        JmpBufferTable[i].is_use=false;
 
     REPORT_NOTE("服务器启动成功。端口:%d 线程数:%d.",port,maxThreadNum);
     while (true)
