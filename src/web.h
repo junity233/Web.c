@@ -75,14 +75,6 @@ long double GetNumArgment(Webc_RequestData* req,const char*name);
 bool GetBoolArgment(Webc_RequestData* req,const char*name);
 
 
-/**
- * 数据类型
- */
-typedef enum{
-    DT_RAW,
-    DT_HTML,
-    DT_FILE
-}Webc_DataType;
 
 /**
  * 响应结构
@@ -91,10 +83,11 @@ typedef struct{
     Webc_Map headers;       //响应头
     int statusCode;         //HTTP状态码
     BinaryBuffer *body;     //响应体
-    Webc_DataType dt;       //返回的数据类型（默认为html）
 }Webc_ResponseData;
 
 #define RET_OK() do{return 200;}while(0)
+
+#define RET_FILE(file) ReadFileToBuffer(res->body,file)
 
 #define RET_NOTFOUND() do{return 404;}while(0)
 

@@ -280,27 +280,13 @@ static void ExitHandler(int n){
     ExitApplication(n);
 }
 
+
+
 typedef struct{
     int connectfd;
     struct sockaddr_in in;
     Webc_Trie siteStructure;
 }ConnectInfo;
-
-static void TransToHTML(Webc_ResponseData *res){
-    NOTNULL(res);
-    BinaryBuffer *buffer=NewBuffer();
-    PrintfToBuffer(buffer,"<!DOCTYPE html>\n");
-    for(int i=0;i<res->body->used;i++){
-        if(res->body->data[i]=='\n')
-            WriteToBuffer(buffer,"<br>\n",5);
-        else if(res->body->data[i]==' ')
-            WriteToBuffer(buffer,"&nbsp;",6);
-        else
-            WriteToBuffer(buffer,res->body->data+i,1);
-    }   
-    BufferClean(res->body);
-    res->body=buffer; 
-}
 
 static void SendResponse(Webc_ResponseData res,int connectfd){
     BinaryBuffer *buffer=NewBuffer();
@@ -310,14 +296,8 @@ static void SendResponse(Webc_ResponseData res,int connectfd){
     }
     else{
         PrintfToBuffer(buffer,"HTTP/1.1 %d\n",res.statusCode);
-        WEBC_MAP_FOREACH(res.headers,i){
+        WEBC_MAP_FOREACH(res.headers,i)
             PrintfToBuffer(buffer,"%s : %s\n",i->key,i->value);
-        }
-        if(res.dt==DT_HTML)
-        {
-            SetResponseHeader(&res,"Content-Type","text/html");
-            TransToHTML(&res);
-        }
         PrintfToBuffer(buffer,"Content-Length:%d\n\n",res.body->used);
     }
     WriteToBuffer(buffer,res.body->data,res.body->used);
@@ -348,7 +328,8 @@ static void ProcessConnect(void *args){
         close(connectfd);
         return;
     }
-    res.dt=DT_HTML;//Content-Type默认为text/html
+    //Content-Type默认为text/html
+    SetResponseHeader(&res,"Content-Type","text/html");
     Webc_Processer processer=TrieGet(siteStructure,req.url);
 
     int idx;
@@ -361,12 +342,18 @@ static void ProcessConnect(void *args){
             case RT_GET:
                 if(processer.GET!=NULL)
                     res.statusCode=(*processer.GET)(&req,&res);
-                else res.statusCode=404;
+                else{
+                    ReadFileToBuffer(res.body,"html/404.html");
+                    res.statusCode=404;
+                }
                 break;
             case RT_POST:
                 if (processer.POST!=NULL)            
                     res.statusCode=(*processer.POST)(&req,&res);
-                else res.statusCode=404;
+                else{
+                    ReadFileToBuffer(res.body,"html/404.html");
+                    res.statusCode=404;
+                }
                 break;
             default:UNREACHED();
         }

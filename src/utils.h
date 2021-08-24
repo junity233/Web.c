@@ -42,6 +42,8 @@ void WriteToBuffer(BinaryBuffer *buffer,void* src,size_t size);
 
 void PrintfToBuffer(BinaryBuffer*buffer,const char* fmt,...);
 
+void ReadFileToBuffer(BinaryBuffer* buffer,const char* file);
+
 void BufferReset(BinaryBuffer* buffer);
 
 void BufferClean(BinaryBuffer *buffer);

@@ -6,12 +6,13 @@
  * echo宏就是向res的body成员写入信息
  */
 int Index(Webc_RequestData *req,Webc_ResponseData *res){
+    echo("<!DOCTYPE html>\n");
     int num=GetNumArgment(req,"num");   //调用GetNumArgment函数来获取一个数字型的参数（若不存在会返回0）
     for(int i=1;i<=num;i++)
     {                                   //打印一个三角形
         for(int j=1;j<=i;j++)
-            echo("*");
-        echo("\n");
+            echo("*&nbsp;");
+        echo("\n<br>");
     }
     return 200;             //返回值就是http的状态码，这里返回200
 }

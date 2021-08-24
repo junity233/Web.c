@@ -1,4 +1,5 @@
 #include"utils.h"
+#include<sys/stat.h>
 
 uint32_t strnchr(const char* str,char C,size_t length){
     uint32_t idx=0;
@@ -86,6 +87,20 @@ void PrintfToBuffer(BinaryBuffer*buffer,const char* fmt,...){
     vsprintf(data,fmt,va);
     va_end(va);
     WriteToBuffer(buffer,data,length);
+}
+
+
+void ReadFileToBuffer(BinaryBuffer* buffer,const char* file){
+    struct stat fs;
+    stat(file,&fs);
+    size_t length=fs.st_size;
+    char* buf=MALLOC_ARRAY(char,length+1);
+    FILE* fp=fopen(file,"rb");
+    fread(buf,1,length,fp);
+    WriteToBuffer(buffer,buf,length);
+    fclose(fp);
+    free(buf);
+
 }
 
 const char* MonthNames[]={
