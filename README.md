@@ -8,7 +8,6 @@ web.c是一个轻量级的http服务器框架，可以像web.py一样快速编�
 - 自动解析GET/POST请求参数，可通过内置API获取
 - 简单、易于上手的API
 - 中文的运行日志
-- 可以将c字符串转为HTML格式（其实只是做了下字符串替换而已啦）
 
 ## 运行截图
 - 源代码:
@@ -34,12 +33,13 @@ $ make build # 编译
  * echo宏就是向res的body成员写入信息
  */
 int Index(Webc_RequestData *req,Webc_ResponseData *res){
+    echo("<!DOCTYPE html>\n");
     int num=GetNumArgment(req,"num");   //调用GetNumArgment函数来获取一个数字型的参数（若不存在会返回0）
     for(int i=1;i<=num;i++)
     {                                   //打印一个三角形
         for(int j=1;j<=i;j++)
-            echo("*");
-        echo("\n");
+            echo("*&nbsp;");
+        echo("\n<br>");
     }
     return 200;             //返回值就是http的状态码，这里返回200
 }
@@ -64,10 +64,11 @@ Webc_Processer processers[]={
 };
 
 int main(){
-    ErrorGrade(ET_NOTE);//设置日志级别为NOTE级别
+    ErrorGrade(ET_DEBUG);//设置日志级别为NOTE级别
     WebQueueSize(1024);//设置socket队列的最大长度
     WebBufferSize(1024*1024);//设置recv缓冲区的长度
     RunWebApplication(processers,8080,16);//启动服务器，第一个参数为处理器结构，第二个参数为端口号，第三个参数为线程的数量
+}
 }
 ```
 
@@ -134,21 +135,7 @@ typedef struct{
 ```
 表示一个请求的信息，可通过GetRequestHeader，SetRequestHeader，GetArgment 等函数操作
 
-### 4.Webc_DataType
-定义：
-``` C
-/**
- * 数据类型
- */
-typedef enum{
-    DT_RAW,
-    DT_HTML,
-    DT_FILE
-}Webc_DataType;
-```
-表示数据类型，DT_RAW为原始数据
-
-### 5.Webc_ResponseData
+### 4.Webc_ResponseData
 定义：
 ``` C
 /**
@@ -158,12 +145,11 @@ typedef struct{
     Webc_Map headers;       //响应头
     int statusCode;         //HTTP状态码
     BinaryBuffer *body;     //响应体
-    Webc_DataType dt;       //返回的数据类型（默认为html）
 }Webc_ResponseData;
 ```
 表示响应数据，可以通过GetResponseHeader、SetResponseHeader、echo等宏或函数操作
 
-### 6.Webc_Processer
+### 5.Webc_Processer
 定义：
 ``` C
 /**
@@ -181,13 +167,12 @@ typedef struct{
 ## TODO
 - [x] 使用线程池实现多线程
 - [x] 解析urlencoded参数
-- [x] C格式字符串转HTML（换行符转\<br>等）
+- [x] 一键返回静态文件
 - [ ] windows兼容
 - [ ] 详细的注释
 - [ ] 解析formdata参数
 - [ ] 使用正则表达式解析url，实现web.py的类似效果
 - [ ] 数据分片收发
-- [ ] 一键返回静态文件
   
 ## 致谢
 
