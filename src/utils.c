@@ -26,13 +26,25 @@ uint32_t HashString(const byte *data,size_t length){
     return (hash & 0x7FFFFFFF);
 }
 
-char* copystr(const char*src,size_t length){
+char* copynstr(const char*src,size_t length){
     if(src==NULL){
         REPORT_DEBUG("函数 copystr 复制了一个空字符串！");
         return NULL;
     }
     if(length==-1)
         length=strlen(src);
+    char* res=MALLOC_ARRAY(char,length+1);
+    memcpy(res,src,length);
+    res[length]='\0';
+    return res;
+}
+
+char* copystr(const char*src){
+    if(src==NULL){
+        REPORT_DEBUG("函数 copystr 复制了一个空字符串！");
+        return NULL;
+    }
+    size_t length=strlen(src);
     char* res=MALLOC_ARRAY(char,length+1);
     memcpy(res,src,length);
     res[length]='\0';

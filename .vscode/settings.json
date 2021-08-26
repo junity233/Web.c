@@ -17,6 +17,20 @@
         "cstdlib": "cpp",
         "type_traits": "cpp",
         "thpool.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "atomic": "cpp",
+        "bit": "cpp",
+        "unordered_map": "cpp",
+        "algorithm": "cpp",
+        "memory": "cpp",
+        "memory_resource": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp",
+        "cmath": "cpp",
+        "istream": "cpp",
+        "numeric": "cpp",
+        "stdexcept": "cpp",
+        "utility": "cpp",
+        "typeinfo": "cpp"
     }
 }

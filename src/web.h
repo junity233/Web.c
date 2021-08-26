@@ -21,6 +21,11 @@ typedef enum{
     RT_UNKNOWN=8
 }Webc_RequestType;
 
+typedef struct{
+    char* name;
+    void* body;
+}Webc_FileArgment;
+
 /**
  * Web请求数据
  */
@@ -59,7 +64,7 @@ void SetRequestHeader(Webc_RequestData *req,const char* name,const char* value);
  * @param {size_t} *valueLength
  * @return {*}
  */
-char* GetArgment(Webc_RequestData* req,const char*name,size_t *valueLength);
+char* GetArgment(Webc_RequestData* req,const char*name);
 
 /**
  * @description: 获取一个数字参数（为兼容小数，返回值为long double），无此参数时返回0（以后一定改进）
@@ -89,6 +94,13 @@ typedef struct{
 
 #define RET_OK() return(200)
 
+/**
+ * @description: 向buffer写入文件
+ * @param {Webc_ResponseData*} res
+ * @param {char*} file 文件路径
+ * @param {char*} type MIME类型1
+ * @return {*}
+ */
 void ReturnFile(Webc_ResponseData* res,const char* file,const char* type);
 
 #define RET_FILE(file,type) \

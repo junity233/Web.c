@@ -46,15 +46,15 @@ typedef struct{
 }ParseBuffer;
 
 static int OnHeaderField(llhttp_t *parser,const char *at,size_t length){    
-    ((ParseBuffer*)parser->data)->fieldBuffer=copystr(at,length);
+    ((ParseBuffer*)parser->data)->fieldBuffer=copynstr(at,length);
     return 0;
 
 }
 
 static int OnHeaderValue(llhttp_t *parser,const char *at,size_t length){
     ParseBuffer* buffer=(ParseBuffer*)parser->data;
-    buffer->valueBuffer=copystr(at,length);
-    MapSet(buffer->res->headers,buffer->fieldBuffer,buffer->valueBuffer,-1);
+    buffer->valueBuffer=copynstr(at,length);
+    MapSet(buffer->res->headers,buffer->fieldBuffer,buffer->valueBuffer);
     return 0;
 }
 
@@ -63,14 +63,14 @@ static int OnUrl(llhttp_t*parser,const char* at,size_t length){
     char urlBuffer[DEFAULT_BUFFER_SIZE];
     memcpy(urlBuffer,at,length);
     urlBuffer[length]='\0';
-    ((ParseBuffer*)parser->data)->res->url=copystr(at,length);
+    ((ParseBuffer*)parser->data)->res->url=copynstr(at,length);
     REPORT_DEBUG("Url:%s",urlBuffer);
     return  0;
 }
 
 static int OnBody(llhttp_t *parser,const char*at,size_t length){
     REPORT_DEBUG("解析Body完毕");
-    ((ParseBuffer*)parser->data)->res->body=copystr(at,length);
+    ((ParseBuffer*)parser->data)->res->body=copynstr(at,length);
     REPORT_DEBUG("Body:%s",((ParseBuffer*)parser->data)->res->body);    
     return 0;
 }
@@ -80,11 +80,14 @@ static void OnException(const e4c_exception * exception){
 }
 
 static int ParserUrl(const char* url,Webc_RequestData *res){
+    NOTNULL(res);
+    if(url==NULL)
+        return -1;
     url_field_t *parse_res;
     parse_res=url_parse(url);
-    res->url=copystr(parse_res->path,-1);
+    res->url=copystr(parse_res->path);
     for(int i=0;i<parse_res->query_num;i++)
-        MapSet(res->args,parse_res->query[i].name,parse_res->query[i].value,-1);
+        MapSet(res->args,copystr(parse_res->query[i].name),copystr(parse_res->query[i].value));
     url_free(parse_res);
     return 0;    
 }
@@ -96,7 +99,7 @@ static int ParserQuery(const char* url,Webc_RequestData *res){
     memset(parse_res,0,sizeof(url_field_t));
     parse_query(parse_res,url);
     for(int i=0;i<parse_res->query_num;i++)
-        MapSet(res->args,parse_res->query[i].name,parse_res->query[i].value,-1);
+        MapSet(res->args,copystr(parse_res->query[i].name),copystr(parse_res->query[i].value));
     url_free(parse_res);
     return 0;    
 }
@@ -172,13 +175,13 @@ static int ParseRequest(Webc_RequestData *res,const char* data,uint32_t length){
     REPORT_DEBUG("参数列表：");
 
     WEBC_MAP_FOREACH(res->args,i){
-        REPORT_DEBUG("%s=%s",i->key,i->value);
+        REPORT_DEBUG("%s=%s",i->key,i->data);
     }
 
     REPORT_DEBUG("Header列表：");
 
     WEBC_MAP_FOREACH(res->headers,i){
-        REPORT_DEBUG("%s=%s",i->key,i->value);
+        REPORT_DEBUG("%s=%s",i->key,i->data);
     } 
 
     return 0;
@@ -187,9 +190,9 @@ static int ParseRequest(Webc_RequestData *res,const char* data,uint32_t length){
 static void RequestDataInit(Webc_RequestData* data){
     NOTNULL(data);
     data->url=data->version=data->body=NULL;
-    data->cookies=NewMap();
-    data->headers=NewMap();
-    data->args=NewMap();
+    data->cookies=NewMap(free);
+    data->headers=NewMap(free);
+    data->args=NewMap(free);
     data->requestType=RT_UNKNOWN;
 }
 
@@ -206,7 +209,7 @@ static void RequestDataClear(Webc_RequestData* data){
 
 void ResponseInit(Webc_ResponseData* response){
     NOTNULL(response);
-    response->headers=NewMap();
+    response->headers=NewMap(free);
     response->body=NewBuffer();
 }
 
@@ -218,45 +221,27 @@ void ResponseDataClear(Webc_ResponseData* response){
 
 void SetRequestHeader(Webc_RequestData *res,const char* name,const char* value){
     NOTNULL(res);
-    MapSet(res->headers,name,value,-1);
+    MapSet(res->headers,name,copystr(value));
 }
 
 char* GetRequestHeader(Webc_RequestData *res,const char* name){
     NOTNULL(res);
-    return MapGet(res->headers,name,NULL);
+    return MapGet(res->headers,name);
 }
 
-char* GetArgment(Webc_RequestData* req,const char*name,size_t *valueLength){
+char* GetStrArgment(Webc_RequestData* req,const char*name){
     NOTNULL(req);
-    return MapGet(req->args,name,valueLength);
-}
-
-long double GetNumArgment(Webc_RequestData* req,const char*name){
-    char* res=MapGet(req->args,name,NULL);
-    if(res==NULL)
-        return 0;
-    return strtold(res,NULL);
-}
-
-int GetBoolArgment(Webc_RequestData* req,const char*name){
-    char* res=MapGet(req->args,name,NULL);
-    if(res==NULL)
-        return NOT_BOOL;
-    if(strcmp(res,"true"))
-        return true;
-    else if(strcmp(res,"false"))
-        return false;
-    return NOT_BOOL;
+    return (char*)MapGet(req->args,name);
 }
 
 char* GetResponseHeader(Webc_ResponseData *req,const char* name){
     NOTNULL(req);
-    return MapGet(req->headers,name,NULL);
+    return (char*)MapGet(req->headers,name);
 }
 
 void SetResponseHeader(Webc_ResponseData *res,const char* name,const char* value){
     NOTNULL(res);
-    MapSet(res->headers,name,value,-1);
+    MapSet(res->headers,name,copystr(value));
 }
 
 void ReturnFile(Webc_ResponseData* res,const char* file,const char* type){
@@ -308,7 +293,7 @@ static void SendResponse(Webc_ResponseData res,int connectfd){
     else{
         PrintfToBuffer(buffer,"HTTP/1.1 %d\n",res.statusCode);
         WEBC_MAP_FOREACH(res.headers,i)
-            PrintfToBuffer(buffer,"%s : %s\n",i->key,i->value);
+            PrintfToBuffer(buffer,"%s : %s\n",i->key,(char*)i->data);
         PrintfToBuffer(buffer,"Content-Length:%d\n\n",res.body->used);
     }
     WriteToBuffer(buffer,res.body->data,res.body->used);
@@ -331,6 +316,12 @@ static void ProcessConnect(void *args){
         ssize_t length;
         memset(recvBuffer,0,WebBufferSize(0));
         length=recv(connectfd,recvBuffer,10240,0);
+        if(length==0)
+        {
+            free(recvBuffer);
+            close(connectfd);
+            return;
+        }
         REPORT_DEBUG("接收到信息：\n%s\n",recvBuffer);
 
         Webc_RequestData req;
